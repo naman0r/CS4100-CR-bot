@@ -31,3 +31,15 @@ def place_card_behind_king_tower():
         pyautogui.dragTo(1020, 770, duration=0.3, button='left')
     else:
         print('bruh')
+        
+# Idea:
+# Train bot to learn the optimal card-placement strategy from the below locations:
+# - Behind the king tower (lowest placement)
+# - In front of the princess towers (medium)
+# - In front of the bridge (highest)
+# For each of the above listed placements, the bot has a 50% chance of placing
+# a card either to the left or right of the aforementioned location (e.g. 50/50
+# left or right side behind the king tower, 50/50 left or right bridge, etc.)
+
+# Over time, the bot will learn which zone and left/right combinations tend to 
+# win more games.

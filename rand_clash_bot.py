@@ -6,7 +6,7 @@ import time
 
 NUM_BATTLES = 0
 BATTLES_WON = 0
-
+BATTLES_LOST = 0
 
 def bot_won_battle():   
     try:
@@ -19,9 +19,12 @@ def bot_won_battle():
  
 def winner_detected():
     global BATTLES_WON
+    global BATTLES_LOST
     
     if bot_won_battle():
         BATTLES_WON += 1
+    else:
+		BATTLES_LOST += 1
 			
     try:
         ok_location = pyautogui.locateCenterOnScreen('buttons/ok.png', confidence=0.8,
@@ -111,7 +114,7 @@ def run_app():
         NUM_BATTLES += 1
         print(f'Playing battle #{NUM_BATTLES}')
         if NUM_BATTLES >= 2:
-            print(f'Won: {BATTLES_WON}, Lost: {NUM_BATTLES - BATTLES_WON}')
+            print(f'Won: {BATTLES_WON}, Lost: {BATTLES_LOST}')
         play_unranked_match()
 
 choose_battle_option()

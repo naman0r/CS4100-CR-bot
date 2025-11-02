@@ -1,4 +1,4 @@
-# Readme for group 8's final project for CS4100 at Northeastern Universuty (Fall 2025)
+# Readme for group 8's final project for CS4100 at Northeastern University (Fall 2025)
 
 ## Description of the project: 
 - AI Powered Clash Royale playing bot
@@ -9,9 +9,12 @@
 
 ### Nice to haves: 
 
-### technologies going to be used: 
+### Technologies going to be used: 
 
 ### AI-concepts, description of environment: 
 
-### distribution of work: 
-
+### Distribution of Work: 
+Andrew:
+- Added original Clash Royale bot skeleton code
+- Improved above code (added input validation, match timeouts, etc.)
+- Added win detection/win-loss tracking

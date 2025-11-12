@@ -6,6 +6,9 @@
 # reward is based on number of crowns won (0 to 3) 
 # reward is like 1 crown +1 reward, 2 crowns +3 reward, 3 crowns +6 reward
 
+# winning the battle should give bonus reward (+8 or something). Max reward 
+# yielded when bot gets most crowns (3) AND wins the match
+
 # remember: winning 2 crowns does not necessarily mean you won the match. You can
 # defeat two princess towers but still lose
 
@@ -24,7 +27,7 @@ Returns true if the bot won, false otherwise
 '''
 def bot_won_battle():
     bot_win_location = pyautogui.locateCenterOnScreen(
-        'win_state/bot_win.png', confidence=0.8, grayscale=True
+        'win_state/bot_win_3.png', confidence=0.8, grayscale=True
     )
     return bot_win_location is not None
     
@@ -43,24 +46,24 @@ def winner_detected():
     if ok_location is None:
         return False  # Match still ongoing
 
-    print("OK button detected — match ended.")
+    print("OK button detected - Match ended, letting confetti fall")
 
-    time.sleep(7) # let confetti fall
+    time.sleep(8) # let confetti fall
+    
     # Detect number of crowns
-    crown_images = {
-        1: 'win_state/one_crown.png',
-        2: 'win_state/two_crown.png',
-        3: 'win_state/three_crown.png'
-    }
-    crowns = 0
-    for count, image in crown_images.items():
-        if pyautogui.locateOnScreen(image, confidence=0.8, grayscale=False):
-            crowns = count  # exact match
-
-    # Compute reward
-    reward_table = {1: 1, 2: 3, 3: 6}
-    reward = reward_table.get(crowns, 0)
-
+    if pyautogui.locateOnScreen('win_state/three_crown.png', confidence=0.8, grayscale=False):
+        print("3 crowns, +6 reward")
+    elif pyautogui.locateOnScreen('win_state/two_crown.png', confidence=0.8, grayscale=False):
+        print("2 crowns, +3 reward")
+    elif pyautogui.locateOnScreen('win_state/one_crown.png', confidence=0.8, grayscale=False):
+        print("1 crown, +1 reward")
+    else:
+        print("0 crowns, -2 reward")
+    
+    #PLACEHOLDER VARIABLES
+    reward = 99999
+    crowns = 99999
+    
     # Update wins/losses
     bot_win_location = pyautogui.locateCenterOnScreen(
         'win_state/bot_win.png', confidence=0.8, grayscale=True
@@ -78,8 +81,6 @@ def winner_detected():
 
     return True
 
-
-        
 def play_card():
     card_slots = [(900, 900), (1000, 900), (1100, 900), (1200, 900)]
     my_arena_zone = {'x': (800, 1200), 'y': (480, 750)}  # potential drop zones

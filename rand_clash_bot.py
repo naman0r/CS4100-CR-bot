@@ -1,3 +1,5 @@
+# bot deck (CHOSEN DECK): knight, musketeer, bomber, archers, minions, giant, mini pekka, spear goblins
+
 import random
 import threading
 
@@ -8,39 +10,45 @@ NUM_BATTLES = 0
 BATTLES_WON = 0
 BATTLES_LOST = 0
 
-def bot_won_battle():   
-    try:
-        bot_win_location = pyautogui.locateCenterOnScreen('win_state/bot_win.png', 
-													confidence=0.8, grayscale=True)
-        return True
-    except pyautogui.ImageNotFoundException:
-        return False
- 
+'''
+Returns true if the bot won, false otherwise
+'''
+def bot_won_battle():
+    bot_win_location = pyautogui.locateCenterOnScreen(
+        'win_state/bot_win.png', confidence=0.8, grayscale=True
+    )
+    return bot_win_location is not None
+    
  
 def winner_detected():
-    global BATTLES_WON
-    global BATTLES_LOST
-    
-    if bot_won_battle():
+    global BATTLES_WON, BATTLES_LOST
+
+    # Check if the OK button (end of match screen) is visible
+    ok_location = pyautogui.locateCenterOnScreen('buttons/ok.png', confidence=0.8, grayscale=True)
+    if ok_location is None:
+        return False  # Match still ongoing
+
+    print("OK button detected — match ended.")
+
+    # Once the match is over, check if the win screen was shown
+    bot_win_location = pyautogui.locateCenterOnScreen('win_state/bot_win_3.png', confidence=0.8, grayscale=True)
+    if bot_win_location is not None:
         BATTLES_WON += 1
+        print("Bot WON the battle!")
     else:
         BATTLES_LOST += 1
-			
-    try:
-        ok_location = pyautogui.locateCenterOnScreen('buttons/ok.png', confidence=0.8,
-													grayscale=True)
-        pyautogui.moveTo(ok_location.x, ok_location.y, duration=0.1)
-        pyautogui.click()
-        return True
-    except pyautogui.ImageNotFoundException:
-        return False
+        print("Bot LOST the battle!")
 
+    # Click OK to continue
+    pyautogui.moveTo(ok_location.x, ok_location.y, duration=0.1)
+    pyautogui.click()
+
+    return True
+
+        
 def play_card():
     card_slots = [(900, 900), (1000, 900), (1100, 900), (1200, 900)]
     my_arena_zone = {'x': (800, 1200), 'y': (480, 750)}  # potential drop zones
-
-    #timer = threading.Timer(180, say_hello) #double elixir place cards faster
-    #timer.start()
 
     time.sleep(random.uniform(3, 5))  # wait a bit for elixir
 
@@ -56,7 +64,7 @@ def play_unranked_match(max_duration=300):  # 5 minutes
     while True:
         if winner_detected():
             print("Match over — Winner detected.")
-            open_mystery_box()
+            open_mystery_box() # opens box (if won) before new battle
             break
         elif time.time() - start_time > max_duration:
             print("Match timeout.")
@@ -89,7 +97,7 @@ def open_mystery_box():
 def choose_battle_option():
     print("NOTE: Ensure you are playing Classic 1v1 mode with this bot")
     while True:
-        mode = input("Press 1 to play 'n' battles, press 2 for unlimited: ").strip()
+        mode = input("\nPress 1 to play 'n' battles, press 2 for unlimited: ").strip()
         if mode == '1':
             try:
                 battles = int(input('Enter number of battles: '))
@@ -120,9 +128,4 @@ def run_app():
 
 choose_battle_option()
 
-# plays unranked clash mode, purpose: farm gold and see how good i can make it play
-# double elixir starts after 3 min., set a timer for it to play cards faster during that time so
-# it doesn't leak elixir
-# use a bot-friendly deck (defensive cards, long-range so placement matters less)
-# bot deck 1: mega knight, firecracker, bats, dart goblin, princess, furnace, skeletons, ice wizard
-# bot deck 2: (evo)firecracker, (evo)tesla, ice wizard, witch, dart goblin, princess, furnace, skeletons
+

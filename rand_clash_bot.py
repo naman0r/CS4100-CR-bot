@@ -1,5 +1,14 @@
 # bot deck (CHOSEN DECK): knight, musketeer, bomber, archers, minions, giant, mini pekka, spear goblins
 
+# Tracks total wins/losses of each match
+# TODO: Track succesfully defeated princess towers
+
+# reward is based on number of crowns won (0 to 3) 
+# reward is like 1 crown +1 reward, 2 crowns +3 reward, 3 crowns +6 reward
+
+# remember: winning 2 crowns does not necessarily mean you won the match. You can
+# defeat two princess towers but still lose
+
 import random
 import threading
 
@@ -21,29 +30,54 @@ def bot_won_battle():
     
  
 def winner_detected():
+    """
+    Detects if the match has ended, updates wins/losses,
+    counts crowns, and calculates reward.
+    """
     global BATTLES_WON, BATTLES_LOST
 
-    # Check if the OK button (end of match screen) is visible
-    ok_location = pyautogui.locateCenterOnScreen('buttons/ok.png', confidence=0.8, grayscale=True)
+    # Check if OK button (end of match) is visible
+    ok_location = pyautogui.locateCenterOnScreen(
+        'buttons/ok.png', confidence=0.8, grayscale=True
+    )
     if ok_location is None:
         return False  # Match still ongoing
 
     print("OK button detected — match ended.")
 
-    # Once the match is over, check if the win screen was shown
-    bot_win_location = pyautogui.locateCenterOnScreen('win_state/bot_win_3.png', confidence=0.8, grayscale=True)
+    time.sleep(7) # let confetti fall
+    # Detect number of crowns
+    crown_images = {
+        1: 'win_state/one_crown.png',
+        2: 'win_state/two_crown.png',
+        3: 'win_state/three_crown.png'
+    }
+    crowns = 0
+    for count, image in crown_images.items():
+        if pyautogui.locateOnScreen(image, confidence=0.8, grayscale=False):
+            crowns = count  # exact match
+
+    # Compute reward
+    reward_table = {1: 1, 2: 3, 3: 6}
+    reward = reward_table.get(crowns, 0)
+
+    # Update wins/losses
+    bot_win_location = pyautogui.locateCenterOnScreen(
+        'win_state/bot_win.png', confidence=0.8, grayscale=True
+    )
     if bot_win_location is not None:
         BATTLES_WON += 1
-        print("Bot WON the battle!")
+        print(f"Bot WON the battle! Crowns: {crowns}, Reward: {reward}")
     else:
         BATTLES_LOST += 1
-        print("Bot LOST the battle!")
+        print(f"Bot LOST the battle! Crowns: {crowns}, Reward: {reward}")
 
     # Click OK to continue
     pyautogui.moveTo(ok_location.x, ok_location.y, duration=0.1)
     pyautogui.click()
 
     return True
+
 
         
 def play_card():

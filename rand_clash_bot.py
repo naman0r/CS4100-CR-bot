@@ -24,7 +24,7 @@ def winner_detected():
     if bot_won_battle():
         BATTLES_WON += 1
     else:
-		BATTLES_LOST += 1
+        BATTLES_LOST += 1
 			
     try:
         ok_location = pyautogui.locateCenterOnScreen('buttons/ok.png', confidence=0.8,
@@ -67,7 +67,7 @@ def play_unranked_match(max_duration=300):  # 5 minutes
 def start_battle():
     print("Starting battle!")
     try:
-        battle_location = pyautogui.locateCenterOnScreen('buttons/battle_bonus.png', confidence=0.8,
+        battle_location = pyautogui.locateCenterOnScreen('buttons/battle.png', confidence=0.8,
                                                          grayscale=True)
         pyautogui.moveTo(battle_location.x, battle_location.y, duration=0.1)
         pyautogui.click()
@@ -80,13 +80,14 @@ def open_mystery_box():
     time.sleep(2)
     print("Opening mystery box...")
     pyautogui.moveTo(1000, 500)
-    pyautogui.click(clicks=5, interval=0.7)
+    pyautogui.click(clicks=5, interval=0.7) 
     time.sleep(1)
     pyautogui.click()
     time.sleep(1)
     pyautogui.click()
 
 def choose_battle_option():
+    print("NOTE: Ensure you are playing Classic 1v1 mode with this bot")
     while True:
         mode = input("Press 1 to play 'n' battles, press 2 for unlimited: ").strip()
         if mode == '1':
@@ -107,7 +108,7 @@ def choose_battle_option():
 def run_app():
     global NUM_BATTLES
     if NUM_BATTLES == 0:
-        time.sleep(3) # time for opening CR
+        time.sleep(5) # time for opening CR
 
     if start_battle():
         time.sleep(3)  # time for letting battle load

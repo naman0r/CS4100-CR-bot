@@ -1,7 +1,7 @@
 # bot deck (CHOSEN DECK): knight, musketeer, bomber, archers, minions, giant, mini pekka, spear goblins
 
 # Tracks total wins/losses of each match
-# TODO: Track succesfully defeated princess towers
+# Tracks succesfully defeated princess towers
 
 # reward is based on number of crowns won (0 to 3) 
 # reward is like 1 crown +1 reward, 2 crowns +3 reward, 3 crowns +6 reward
@@ -31,7 +31,6 @@ def bot_won_battle():
     )
     return bot_win_location is not None
     
- 
 def winner_detected():
     """
     Detects if the match has ended, updates wins/losses,
@@ -39,7 +38,6 @@ def winner_detected():
     """
     global BATTLES_WON, BATTLES_LOST
 
-    # Check if OK button (end of match) is visible
     ok_location = pyautogui.locateCenterOnScreen(
         'buttons/ok.png', confidence=0.8, grayscale=True
     )
@@ -47,40 +45,32 @@ def winner_detected():
         return False  # Match still ongoing
 
     print("OK button detected - Match ended, letting confetti fall")
+    time.sleep(8)  # Let confetti fall
 
-    time.sleep(8) # let confetti fall
-    
-    # Detect number of crowns
-    if pyautogui.locateOnScreen('win_state/three_crown.png', confidence=0.8, grayscale=False):
-        print("3 crowns, +6 reward")
-    elif pyautogui.locateOnScreen('win_state/two_crown.png', confidence=0.8, grayscale=False):
-        print("2 crowns, +3 reward")
-    elif pyautogui.locateOnScreen('win_state/one_crown.png', confidence=0.8, grayscale=False):
-        print("1 crown, +1 reward")
+    if pyautogui.locateOnScreen('win_state/three_crown.png', confidence=0.8):
+        crowns, reward = 3, 6
+    elif pyautogui.locateOnScreen('win_state/two_crown.png', confidence=0.8):
+        crowns, reward = 2, 3
+    elif pyautogui.locateOnScreen('win_state/one_crown.png', confidence=0.8):
+        crowns, reward = 1, 1
     else:
-        print("0 crowns, -2 reward")
-    
-    #PLACEHOLDER VARIABLES
-    reward = 99999
-    crowns = 99999
-    
-    # Update wins/losses
+        crowns, reward = 0, -2
+
     bot_win_location = pyautogui.locateCenterOnScreen(
-        'win_state/bot_win.png', confidence=0.8, grayscale=True
+        'win_state/bot_win_3.png', confidence=0.8, grayscale=True
     )
-    if bot_win_location is not None:
+    if bot_win_location:
         BATTLES_WON += 1
         print(f"Bot WON the battle! Crowns: {crowns}, Reward: {reward}")
     else:
         BATTLES_LOST += 1
         print(f"Bot LOST the battle! Crowns: {crowns}, Reward: {reward}")
 
-    # Click OK to continue
     pyautogui.moveTo(ok_location.x, ok_location.y, duration=0.1)
     pyautogui.click()
+    return True 
 
-    return True
-
+'''
 def play_card():
     card_slots = [(900, 900), (1000, 900), (1100, 900), (1200, 900)]
     my_arena_zone = {'x': (800, 1200), 'y': (480, 750)}  # potential drop zones
@@ -91,6 +81,28 @@ def play_card():
     x_spot = random.randint(my_arena_zone['x'][0], my_arena_zone['x'][1])
     y_spot = random.randint(my_arena_zone['y'][0], my_arena_zone['y'][1])
 
+    pyautogui.moveTo(card[0], card[1], duration=0.2)
+    pyautogui.dragTo(x_spot, y_spot, duration=0.3, button='left')
+'''
+
+from local_placements import card_slots, king_tower, princess_towers, bridge, arena_zone
+
+def play_card():
+    time.sleep(random.uniform(3, 5))  # wait a bit for elixir
+
+    # Pick a card from hand
+    card = random.choice(card_slots)
+
+    # Define possible zones
+    zones = [king_tower, princess_towers, bridge]
+
+    # Pick a random zone
+    selected_zone = random.choice(zones)
+
+    # Pick left or right within the selected zone
+    x_spot, y_spot = random.choice(list(selected_zone.values()))
+
+    # Move and drop the card
     pyautogui.moveTo(card[0], card[1], duration=0.2)
     pyautogui.dragTo(x_spot, y_spot, duration=0.3, button='left')
 

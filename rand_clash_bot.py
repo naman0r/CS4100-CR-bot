@@ -1,5 +1,14 @@
 # bot deck (CHOSEN DECK): knight, musketeer, bomber, archers, minions, giant, mini pekka, spear goblins
 
+'''
+Group TODO:
+	- andrew: debug crown rewards, add file i/o to track wins losses rewards
+	- addison: play game to get familiar with mechanics, run program
+	- philip: setup bluestacks clash royale and think of graphs/figures (attributes) for presentation
+	- naman: CR gym enviornment and figure how to incorporate RL into project 
+	- EVERYONE: Add coordinate placements for your computer in local_placements.py
+'''
+
 # Tracks total wins/losses of each match
 # Tracks succesfully defeated princess towers
 

@@ -17,7 +17,7 @@
 # Note: Let's model this clash bot after Programming Assignment 2 - RL (Q_learning.py)
 
 Group TODO:
-	- andrew: debug crown rewards, add file i/o to track wins losses rewards
+	- andrew: debug crown rewards, (done) -> add file i/o to track wins losses rewards
 	- addison: play game to get familiar with mechanics, run program
 	- philip: setup bluestacks clash royale and think of graphs/figures (attributes) for presentation
 	- naman: CR gym enviornment and figure how to incorporate RL into project 
@@ -38,13 +38,65 @@ Group TODO:
 
 import random
 import threading
-
 import pyautogui
 import time
+import pickle
+from collections import defaultdict
+from local_placements import card_slots, king_tower, princess_towers, bridge
+
+
+Q = defaultdict(float)
+N = defaultdict(int)
+gamma = 0.9
+epsilon = 0.3   # start with 30% exploration
+decay_rate = 0.995  # slowly reduce exploration
 
 NUM_BATTLES = 0
 BATTLES_WON = 0
 BATTLES_LOST = 0
+
+
+# All possible (zone, side) combinations
+zones = {
+    "king_tower": king_tower,
+    "princess_towers": princess_towers,
+    "bridge": bridge
+}
+
+actions = [(zone, side) for zone in zones for side in zones[zone]]  # e.g. ("bridge", "left")
+last_action = None
+
+# Load Q-table if exists
+try:
+    with open("zone_qtable.pkl", "rb") as f:
+        Q.update(pickle.load(f))
+        print(f"[INFO] Loaded Q-table with {len(Q)} entries.")
+except FileNotFoundError:
+    print("[INFO] No saved Q-table found, starting fresh.")
+
+# ---------------------------
+# Q-learning helper functions
+# ---------------------------
+def choose_action():
+    """greedy selection of (zone, side)"""
+    if random.random() < epsilon:
+        return random.choice(actions)
+    return max(actions, key=lambda a: Q[(state, a)])
+
+def update_Q(action, reward):
+    """Q-learning update"""
+    N[(state, action)] += 1
+    eta = 1 / (1 + N[(state, action)])
+    best_next = max(Q[(state, a)] for a in actions)
+    Q[(state, action)] += eta * (reward + gamma * best_next - Q[(state, action)])
+
+def save_Q():
+    """Persist learned Q-values"""
+    with open("zone_qtable.pkl", "wb") as f:
+        pickle.dump(dict(Q), f)
+    """Persist battles won and lost"""
+    with open("battle_stats.txt", "a") as f:
+        f.write(f"{NUM_BATTLES},{BATTLES_WON},{BATTLES_LOST}\n")
 
 '''
 Returns true if the bot won, false otherwise
@@ -66,7 +118,7 @@ def winner_detected():
         'buttons/ok.png', confidence=0.8, grayscale=True
     )
     if ok_location is None:
-        return False  # Match still ongoing
+        return None  # Match still ongoing
 
     print("OK button detected - Match ended, letting confetti fall")
     time.sleep(8)  # Let confetti fall
@@ -84,33 +136,43 @@ def winner_detected():
         'win_state/bot_win_3.png', confidence=0.8, grayscale=True
     )
     if bot_win_location:
+        reward += 8
         BATTLES_WON += 1
         print(f"Bot WON the battle! Crowns: {crowns}, Reward: {reward}")
     else:
         BATTLES_LOST += 1
         print(f"Bot LOST the battle! Crowns: {crowns}, Reward: {reward}")
 
-    pyautogui.moveTo(ok_location.x, ok_location.y, duration=0.1)
+    pyautogui.moveTo(ok_location.x, ok_location.y, duration=0.2)
     pyautogui.click()
-    return True 
+    return reward 
 
-'''
 def play_card():
-    card_slots = [(900, 900), (1000, 900), (1100, 900), (1200, 900)]
-    my_arena_zone = {'x': (800, 1200), 'y': (480, 750)}  # potential drop zones
+    """Play a random card using RL to choose best zone + side."""
+    global last_action
 
-    time.sleep(random.uniform(3, 5))  # wait a bit for elixir
+    # Wait for elixir / cooldown
+    time.sleep(random.uniform(3, 5))
 
+    # Select a random card from hand
     card = random.choice(card_slots)
-    x_spot = random.randint(my_arena_zone['x'][0], my_arena_zone['x'][1])
-    y_spot = random.randint(my_arena_zone['y'][0], my_arena_zone['y'][1])
 
+    # RL chooses best zone + side
+    action = choose_action()
+    last_action = action
+    zone_name, side = action
+
+    # Get coordinates from local_placements
+    x_spot, y_spot = zones[zone_name][side]
+
+    # Perform drag from card slot to placement
     pyautogui.moveTo(card[0], card[1], duration=0.2)
-    pyautogui.dragTo(x_spot, y_spot, duration=0.3, button='left')
+    pyautogui.dragTo(x_spot, y_spot, duration=0.3, button="left")
+
+    print(f"[ACTION] Played at {zone_name} ({side}) -> ({x_spot}, {y_spot})")
+
 '''
-
-from local_placements import card_slots, king_tower, princess_towers, bridge, arena_zone
-
+DO NOT DELETE - KEEP FOR FUTURE REFERENCE 
 def play_card():
     time.sleep(random.uniform(3, 5))  # wait a bit for elixir
 
@@ -129,13 +191,18 @@ def play_card():
     # Move and drop the card
     pyautogui.moveTo(card[0], card[1], duration=0.2)
     pyautogui.dragTo(x_spot, y_spot, duration=0.3, button='left')
+'''
 
 def play_unranked_match(max_duration=300):  # 5 minutes 
     start_time = time.time()
     while True:
-        if winner_detected():
+        reward = winner_detected()
+        if reward is not None:
             print("Match over — Winner detected.")
-            open_mystery_box() # opens box (if won) before new battle
+            update_Q(last_action, reward)
+            save_Q()
+            epsilon = max(0.05, epsilon * decay_rate) # prevent hitting 0
+            open_mystery_box()
             break
         elif time.time() - start_time > max_duration:
             print("Match timeout.")
@@ -151,8 +218,8 @@ def start_battle():
         pyautogui.moveTo(battle_location.x, battle_location.y, duration=0.1)
         pyautogui.click()
         return True
-    except pyautogui.ImageNotFoundException:
-        print('Battle button not found')
+    except Exception as e:
+        print(f"Battle button not found: {e}")
         return False
 
 def open_mystery_box():

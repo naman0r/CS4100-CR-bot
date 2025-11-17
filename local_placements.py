@@ -47,6 +47,12 @@ arena_zone = {
     "y": (480, 750)
 }
 
+
+# Only search in the BOT'S CROWN AREA to prevent false matches
+# Adjust these (x,y,width,height) to your screen using cursor_locater.py
+bot_crown_region = (800, 450, 900, 150)
+
+
 # -------------------
 # Usage in bot code:
 # from local_placements import card_slots, king_tower, princess_towers, bridge, arena_zone

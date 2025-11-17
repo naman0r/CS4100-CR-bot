@@ -42,7 +42,7 @@ import pyautogui
 import time
 import pickle
 from collections import defaultdict
-from local_placements import card_slots, king_tower, princess_towers, bridge
+from local_placements import card_slots, king_tower, princess_towers, bridge, bot_crown_region
 
 
 Q = defaultdict(float)
@@ -121,17 +121,35 @@ def winner_detected():
         return None  # Match still ongoing
 
     print("OK button detected - Match ended, letting confetti fall")
-    time.sleep(8)  # Let confetti fall
+    time.sleep(9)  # Let confetti fall
+	
+	# NOTE: UPDATE CROWN_REGION (in local_placements.py) to work for your screen
+	# dimensions! 
 
-    if pyautogui.locateOnScreen('win_state/three_crown.png', confidence=0.8):
+    if pyautogui.locateOnScreen('win_state/three_crown.png',
+                                confidence=0.95, # high confidence to ensure match
+                                grayscale=True,
+                                region=bot_crown_region):
         crowns, reward = 3, 6
-    elif pyautogui.locateOnScreen('win_state/two_crown.png', confidence=0.8):
+    
+    elif pyautogui.locateOnScreen('win_state/two_crown.png',
+                                  confidence=0.95,
+                                  grayscale=True,
+                                  region=bot_crown_region): 
         crowns, reward = 2, 3
-    elif pyautogui.locateOnScreen('win_state/one_crown.png', confidence=0.8):
+    
+    elif pyautogui.locateOnScreen('win_state/one_crown.png',
+                                  confidence=0.95,
+                                  grayscale=True,
+                                  region=bot_crown_region):
         crowns, reward = 1, 1
+    
     else:
         crowns, reward = 0, -2
 
+	# You may need to change below code to win_state/bot_win_2.png or 3, 
+	# (or create your own screenshot/put it here), depending on arena background
+	# Check the win_state folder to change the bot's win image
     bot_win_location = pyautogui.locateCenterOnScreen(
         'win_state/bot_win_3.png', confidence=0.8, grayscale=True
     )

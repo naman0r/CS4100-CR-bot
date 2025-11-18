@@ -63,6 +63,9 @@ zones = {
     "bridge": bridge
 }
 
+# Define state (single state for now as we don't detect game state)
+state = "battle"
+
 actions = [(zone, side) for zone in zones for side in zones[zone]]  # e.g. ("bridge", "left")
 last_action = None
 
@@ -81,14 +84,26 @@ def choose_action():
     """greedy selection of (zone, side)"""
     if random.random() < epsilon:
         return random.choice(actions)
+    # Use the global 'state' variable
     return max(actions, key=lambda a: Q[(state, a)])
 
-def update_Q(action, reward):
-    """Q-learning update"""
-    N[(state, action)] += 1
-    eta = 1 / (1 + N[(state, action)])
-    best_next = max(Q[(state, a)] for a in actions)
-    Q[(state, action)] += eta * (reward + gamma * best_next - Q[(state, action)])
+def update_Q(current_state, action, reward, next_state):
+    """
+    Q-learning update based on class notes:
+    Q(s, a) = (1 - eta) * Q(s, a) + eta * [r + gamma * V(s')]
+    where V(s') = max_a' Q(s', a')
+    """
+    N[(current_state, action)] += 1
+    eta = 1 / (1 + N[(current_state, action)])
+    
+    if next_state is None:
+        # Terminal state, V(s') = 0
+        best_next = 0
+    else:
+        best_next = max(Q[(next_state, a)] for a in actions)
+        
+    Q[(current_state, action)] = (1 - eta) * Q[(current_state, action)] + \
+                                 eta * (reward + gamma * best_next)
 
 def save_Q():
     """Persist learned Q-values"""
@@ -217,7 +232,8 @@ def play_unranked_match(max_duration=300):  # 5 minutes
         reward = winner_detected()
         if reward is not None:
             print("Match over — Winner detected.")
-            update_Q(last_action, reward)
+            if last_action is not None:
+                update_Q(state, last_action, reward, None)  # Terminal state
             save_Q()
             epsilon = max(0.05, epsilon * decay_rate) # prevent hitting 0
             open_mystery_box()

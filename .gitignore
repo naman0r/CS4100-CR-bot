@@ -1,2 +1,6 @@
 # Ignore local placements file
 local_placements.py
+__pycache__/
+local_placements.py
+.DS_Store
+venv/

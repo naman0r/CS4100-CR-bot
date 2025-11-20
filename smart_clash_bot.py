@@ -49,7 +49,7 @@ Q = defaultdict(float)
 N = defaultdict(int)
 gamma = 0.9
 epsilon = 0.3   # start with 30% exploration
-decay_rate = 0.995  # slowly reduce exploration
+#decay_rate variable below
 
 NUM_BATTLES = 0
 BATTLES_WON = 0
@@ -164,6 +164,27 @@ def winner_detected():
     pyautogui.moveTo(ok_location.x, ok_location.y, duration=0.2)
     pyautogui.click()
     return reward 
+    
+    
+    '''Q_learning.py code below, for graphs/figures of learning. Andrew -> add the 
+    necessary code to make below plots work 
+        
+	# --- Plot rewards per episode ---
+	plt.figure(figsize=(10, 6))
+
+	plt.plot(rewards_per_episode, color='lightgray', linewidth=1, label='Raw Reward')
+	plt.plot(range(window_size - 1, len(running_avg) + window_size - 1),
+			 running_avg, color='steelblue', linewidth=2, label=f'Running Avg ({window_size})')
+
+	plt.title(f"Training Rewards per Episode\nEpisodes={num_episodes}, Decay={decay_rate}", fontsize=14)
+	plt.xlabel("Episode", fontsize=12)
+	plt.ylabel("Total Reward", fontsize=12)
+	plt.legend(fontsize=10)
+	plt.grid(alpha=0.3)
+	plt.tight_layout()
+	plt.savefig(f"rewards_plot_{num_episodes}_{decay_rate}.png", dpi=300)
+	plt.close()    
+    '''
 
 def play_card():
     """Play a random card using RL to choose best zone + side."""
@@ -268,6 +289,13 @@ def choose_battle_option():
                 run_app()
         else:
             print("Invalid option. Try again.")
+
+'''
+Specify number of episodes and decay rate for training and evaluation.
+'''
+
+num_episodes = 5000000
+decay_rate = 0.995
 
 def run_app():
     global NUM_BATTLES

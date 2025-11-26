@@ -36,6 +36,7 @@ Group TODO:
 # remember: winning 2 crowns does not necessarily mean you won the match. You can
 # defeat two princess towers but still lose
 
+
 import random
 import threading
 import pyautogui
@@ -45,7 +46,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from collections import defaultdict
 from local_placements import card_slots, king_tower, princess_towers, bridge, bot_crown_region
-
 
 Q = defaultdict(float)
 N = defaultdict(int)
@@ -74,6 +74,7 @@ actions = [(card_idx, zone, side) for card_idx in card_indices for zone in zones
 last_action = None
 last_state = None
 
+
 # Load Q-table if exists
 try:
     with open("zone_qtable.pkl", "rb") as f:
@@ -81,6 +82,7 @@ try:
         print(f"[INFO] Loaded Q-table with {len(Q)} entries.")
 except FileNotFoundError:
     print("[INFO] No saved Q-table found, starting fresh.")
+
 
 # ---------------------------
 # Q-learning helper functions
@@ -142,6 +144,7 @@ def log_battle_result(reward, won):
     # Save to CSV
     with open("battle_log.csv", "a") as f:
         f.write(f"{NUM_BATTLES},{1 if won else 0},{reward}\n")
+
 
 def plot_progress():
     """Generates a graph of training progress"""
@@ -220,6 +223,7 @@ def bot_won_battle():
     )
     return bot_win_location is not None
     
+ 
 def winner_detected():
     """
     Detects if the match has ended, updates wins/losses,
@@ -282,8 +286,89 @@ def winner_detected():
     # Generate graphs
     plot_progress()
     
-    return reward 
+    return reward   
+ 
+'''
+def winner_detected():
+    """
+    Detects if the match has ended, updates wins/losses,
+    counts crowns, and calculates reward.
+    """
+    global BATTLES_WON, BATTLES_LOST
 
+    ok_location = pyautogui.locateCenterOnScreen(
+        'buttons/ok.png', confidence=0.8, grayscale=True
+    )
+    if ok_location is None:
+        return None  # Match still ongoing
+
+    print("OK button detected - Match ended, letting confetti fall")
+    time.sleep(9)  # Let confetti fall
+	
+	# NOTE: UPDATE CROWN_REGION (in local_placements.py) to work for your screen
+	# dimensions! 
+
+    if pyautogui.locateOnScreen('win_state/three_crown.png',
+                                confidence=0.95, # high confidence to ensure match
+                                grayscale=True,
+                                region=bot_crown_region):
+        crowns, reward = 3, 6
+    
+    elif pyautogui.locateOnScreen('win_state/two_crown.png',
+                                  confidence=0.95,
+                                  grayscale=True,
+                                  region=bot_crown_region): 
+        crowns, reward = 2, 3
+    
+    elif pyautogui.locateOnScreen('win_state/one_crown.png',
+                                  confidence=0.95,
+                                  grayscale=True,
+                                  region=bot_crown_region):
+        crowns, reward = 1, 1
+    
+    else:
+        crowns, reward = 0, -2
+
+	# You may need to change below code to win_state/bot_win_2.png or 3, 
+	# (or create your own screenshot/put it here), depending on arena background
+	# Check the win_state folder to change the bot's win image
+    bot_win_location = pyautogui.locateCenterOnScreen(
+        'win_state/bot_win_3.png', confidence=0.8, grayscale=True
+    )
+    if bot_win_location:
+        reward += 8
+        BATTLES_WON += 1
+        print(f"Bot WON the battle! Crowns: {crowns}, Reward: {reward}")
+    else:
+        BATTLES_LOST += 1
+        print(f"Bot LOST the battle! Crowns: {crowns}, Reward: {reward}")
+
+    pyautogui.moveTo(ok_location.x, ok_location.y, duration=0.2)
+    pyautogui.click()
+    return reward 
+    
+    
+    Q_learning.py code below, for graphs/figures of learning. Andrew -> add the 
+    necessary code to make below plots work 
+        
+	# --- Plot rewards per episode ---
+	plt.figure(figsize=(10, 6))
+
+	plt.plot(rewards_per_episode, color='lightgray', linewidth=1, label='Raw Reward')
+	plt.plot(range(window_size - 1, len(running_avg) + window_size - 1),
+			 running_avg, color='steelblue', linewidth=2, label=f'Running Avg ({window_size})')
+
+	plt.title(f"Training Rewards per Episode\nEpisodes={num_episodes}, Decay={decay_rate}", fontsize=14)
+	plt.xlabel("Episode", fontsize=12)
+	plt.ylabel("Total Reward", fontsize=12)
+	plt.legend(fontsize=10)
+	plt.grid(alpha=0.3)
+	plt.tight_layout()
+	plt.savefig(f"rewards_plot_{num_episodes}_{decay_rate}.png", dpi=300)
+	plt.close()    
+'''
+    
+'''
 def play_card(start_time):
     """Play a card using RL to choose best card_slot + zone + side."""
     global last_action, last_state
@@ -327,6 +412,33 @@ def play_card(start_time):
     pyautogui.dragTo(x_spot, y_spot, duration=0.3, button="left")
 
     print(f"[ACTION] State: {current_state} | Played Card {card_idx} at {zone_name} ({side})")
+'''
+
+'''
+def play_card():
+    # Play a random card using RL to choose best zone + side.
+    global last_action
+
+    # Wait for elixir / cooldown
+    time.sleep(random.uniform(3, 5))
+
+    # Select a random card from hand
+    card = random.choice(card_slots)
+
+    # RL chooses best zone + side
+    action = choose_action()
+    last_action = action
+    zone_name, side = action
+
+    # Get coordinates from local_placements
+    x_spot, y_spot = zones[zone_name][side]
+
+    # Perform drag from card slot to placement
+    pyautogui.moveTo(card[0], card[1], duration=0.2)
+    pyautogui.dragTo(x_spot, y_spot, duration=0.3, button="left")
+
+    print(f"[ACTION] Played at {zone_name} ({side}) -> ({x_spot}, {y_spot})")
+'''
 
 '''
 DO NOT DELETE - KEEP FOR FUTURE REFERENCE 
@@ -349,6 +461,7 @@ def play_card():
     pyautogui.moveTo(card[0], card[1], duration=0.2)
     pyautogui.dragTo(x_spot, y_spot, duration=0.3, button='left')
 '''
+
 
 def play_unranked_match(max_duration=300):  # 5 minutes 
     start_time = time.time()
@@ -409,9 +522,7 @@ def choose_battle_option():
         else:
             print("Invalid option. Try again.")
 
-'''
-Specify number of episodes and decay rate for training and evaluation.
-'''
+# Specify number of episodes and decay rate for training and evaluation.
 
 num_episodes = 5000000
 decay_rate = 0.995

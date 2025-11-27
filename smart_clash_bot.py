@@ -11,8 +11,8 @@
 # win more games.
 
 '''
-# BOT DECK (use these cards): knight, musketeer, bomber, archers, minions, 
-							  giant, mini pekka, spear goblins
+# BOT DECK (use these cards): knight, firecracker, valkyrie, dart goblin, bats, 
+							  giant skeleton, ice wizard, magic archer
 
 # Note: Let's model this clash bot after Programming Assignment 2 - RL (Q_learning.py)
 
@@ -51,7 +51,7 @@ from local_placements import card_slots, king_tower, princess_towers, bridge, bo
 
 Q = defaultdict(float)
 N = defaultdict(int)
-gamma = 0.95
+gamma = 0.9
 epsilon = 0.67   # start with 67% exploration
 #decay_rate variable below
 
@@ -388,6 +388,7 @@ def winner_detected():
         print(f"Bot WON the battle! Crowns: {crowns}, Reward: {reward}", flush=True)
         log_battle_result(reward, True)
     else:
+        reward += -6
         BATTLES_LOST += 1
         print(f"Bot LOST the battle! Crowns: {crowns}, Reward: {reward}", flush=True)
         log_battle_result(reward, False)

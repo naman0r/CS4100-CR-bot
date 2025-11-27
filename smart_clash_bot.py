@@ -76,6 +76,9 @@ actions = [(card_idx, zone, side) for card_idx in card_indices for zone in zones
 last_action = None
 last_state = None
 
+match_durations = []   # (episode, duration_seconds)
+
+
 
 # Load Q-table if exists
 try:
@@ -84,6 +87,12 @@ try:
         print(f"\n[INFO] Loaded Q-table with {len(Q)} entries.")
 except FileNotFoundError:
     print("[INFO] No saved Q-table found, starting fresh.")
+
+
+def safe_exit():
+    print("\n[SAFE EXIT] Saving Q-table before quitting...", flush=True)
+    save_Q() 
+    print("[SAFE EXIT] Q-table saved. Exiting now.", flush=True)
 
 
 # ---------------------------
@@ -103,12 +112,6 @@ def get_state(start_time):
         return "mid"
     else:
         return "late"
-
-def choose_action(state):
-    """greedy selection of (card_index, zone, side)"""
-    if random.random() < epsilon:
-        return random.choice(actions)
-    return max(actions, key=lambda a: Q[(state, a)])
 
 def update_Q(current_state, action, reward, next_state):
     """
@@ -287,6 +290,7 @@ def winner_detected():
     
     # Generate graphs
     plot_progress()
+    plot_match_durations()
     
     return reward   
      
@@ -329,7 +333,7 @@ def play_card(start_time):
     x_spot, y_spot = zones[zone_name][side]
 
     # Perform drag from card slot to placement
-    pyautogui.moveTo(card[0], card[1], duration=0.2)
+    pyautogui.moveTo(card[0], card[1], duration=0.3)
     pyautogui.dragTo(x_spot, y_spot, duration=0.5, button="left")
 
     print(f"[ACTION] State: {current_state} | Played Card {card_idx} at {zone_name} ({side})", flush=True)
@@ -384,25 +388,72 @@ def play_card():
     pyautogui.dragTo(x_spot, y_spot, duration=0.3, button='left')
 '''
 
+def plot_match_durations():
+    if len(match_durations) < 2:
+        return
+
+    episodes = [x[0] for x in match_durations]
+    durations = [x[1] for x in match_durations]
+
+    window = 10
+    moving_avg = [
+        np.mean(durations[max(0, i-window+1):i+1])
+        for i in range(len(durations))
+    ]
+
+    plt.figure(figsize=(10, 5))
+    plt.plot(episodes, durations, alpha=0.3, label="Match Duration (seconds)")
+    plt.plot(episodes, moving_avg, linewidth=2, label=f"Moving Avg ({window})")
+    plt.title("Match Duration Over Training Time")
+    plt.xlabel("Episode")
+    plt.ylabel("Duration (seconds)")
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig("match_durations.png")
+    plt.close()
+
+    print("[INFO] Updated match_durations.png", flush=True)
+
 
 def play_unranked_match(max_duration=300):  # 5 minutes 
-    global epsilon
+    global epsilon, NUM_BATTLES
+
     start_time = time.time()
     while True:
         reward = winner_detected()
         if reward is not None:
-            print("Match over - Winner detected.", flush=True)
+            duration = time.time() - start_time
+
+            # Record match duration
+            match_durations.append((NUM_BATTLES, duration))
+            with open("match_durations.csv", "a") as f:
+                f.write(f"{NUM_BATTLES},{duration}\n")
+
+            print(f"Match lasted {duration:.1f} seconds.", flush=True)
+
+            # Q-learning update
             if last_action is not None and last_state is not None:
-                update_Q(last_state, last_action, reward, None)  # Terminal state
+                update_Q(last_state, last_action, reward, None)
+
             save_Q()
-            epsilon = max(0.05, epsilon * decay_rate) # prevent hitting 0
+            epsilon = max(0.05, epsilon * decay_rate)
+
             open_mystery_box()
             break
+
         elif time.time() - start_time > max_duration:
+            duration = max_duration
+
+            match_durations.append((NUM_BATTLES, duration))
+            with open("match_durations.csv", "a") as f:
+                f.write(f"{NUM_BATTLES},{duration}\n")
+
             print("Match timeout.", flush=True)
             break
+
         else:
             play_card(start_time)
+
 
 def start_battle():
     print("\nStarting battle!", flush=True)
@@ -452,15 +503,29 @@ decay_rate = 0.995
 
 def run_app():
     global NUM_BATTLES
-    if NUM_BATTLES == 0:
-        time.sleep(5) # time for opening CR
+    try:
+        if NUM_BATTLES == 0:
+            time.sleep(5)  # time for opening CR
+        
+        if start_battle():
+            time.sleep(4)  # let battle load
+            NUM_BATTLES += 1
+            print(f'Playing battle #{NUM_BATTLES}', flush=True)
 
-    if start_battle():
-        time.sleep(3)  # time for letting battle load
-        NUM_BATTLES += 1
-        print(f'Playing battle #{NUM_BATTLES}', flush=True)
-        if NUM_BATTLES >= 2:
-            print(f'Won: {BATTLES_WON}, Lost: {BATTLES_LOST}', flush=True)
-        play_unranked_match()
+            if NUM_BATTLES >= 2:
+                print(f'Won: {BATTLES_WON}, Lost: {BATTLES_LOST}', flush=True)
 
-choose_battle_option()
+            play_unranked_match()
+
+    except KeyboardInterrupt:
+        safe_exit()
+        # Rethrow to stop outer loop if needed
+        raise  
+
+if __name__ == "__main__":
+    try:
+        choose_battle_option()
+    except KeyboardInterrupt:
+        safe_exit()
+        print("Exited safely.")
+

@@ -221,7 +221,7 @@ Returns true if the bot won, false otherwise
 '''
 def bot_won_battle():
     bot_win_location = pyautogui.locateCenterOnScreen(
-        'win_state/bot_win_3.png', confidence=0.8, grayscale=True
+        'win_state/bot_win.png', confidence=0.8, grayscale=True
     )
     return bot_win_location is not None
     

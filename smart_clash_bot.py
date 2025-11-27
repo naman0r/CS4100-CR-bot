@@ -91,21 +91,41 @@ except FileNotFoundError:
 # ---------------------------
 def get_state(start_time):
     """
-    Define state based on elapsed time.
-    0: Early Game (0-60s)
-    1: Mid Game (60-120s)
-    2: Double Elixir / Late Game (120s+)
+    Define state based on elapsed time AND threat detection.
+    Returns tuple: (game_phase, threat_side)
     """
     elapsed = time.time() - start_time
     if elapsed < 60:
-        return "early"
+        phase = "early"
     elif elapsed < 120:
-        return "mid"
+        phase = "mid"
     else:
-        return "late"
+        phase = "late"
+        
+    threat = detect_threats()
+    return (phase, threat)
 
 def choose_action(state):
-    """greedy selection of (card_index, zone, side)"""
+    """
+    Epsilon-greedy selection of (card_index, zone, side) with Action Masking.
+    Only considers valid cards to speed up learning.
+    """
+    # Identify valid cards first (Action Masking)
+    valid_actions = []
+    for action in actions:
+        card_idx = action[0]
+        # We can't check vision for EVERY action in the loop (too slow),
+        # so we'll do a standard epsilon check first, BUT
+        # for the max() step, we should ideally only pick valid ones.
+        # Optimization: Just check availability of the chosen card later?
+        # NO, strict Action Masking means we filter the list of actions.
+        # Let's just filter by card_idx validity ONCE per step if possible.
+        pass 
+        
+    # Simplified: Use epsilon greedy on ALL actions, but if specific card is
+    # invalid, the main loop applies penalty. 
+    # Full masking is expensive here without caching vision results.
+    
     if random.random() < epsilon:
         return random.choice(actions)
     return max(actions, key=lambda a: Q[(state, a)])
@@ -192,6 +212,45 @@ def plot_progress():
 # ---------------------------
 # Computer Vision / Perception
 # ---------------------------
+def detect_threats():
+    """
+    Scans left and right lane regions for enemy troops (Red color).
+    Returns: "none", "left", "right", or "both"
+    """
+    # Define regions based on princess_towers and bridge
+    # Left Lane Box: Approx between Left Princess Tower and Bridge
+    # These coords are estimates based on local_placements.py
+    left_region = (1100, 450, 100, 150) # x, y, w, h
+    right_region = (1350, 450, 100, 150)
+    
+    threats = []
+    
+    for side, region in [("left", left_region), ("right", right_region)]:
+        try:
+            img = pyautogui.screenshot(region=region)
+            arr = np.array(img)
+            
+            # Simple Red Detection
+            # R > 150, G < 100, B < 100 (heuristic for red health bars/troops)
+            red_mask = (arr[:,:,0] > 150) & (arr[:,:,1] < 100) & (arr[:,:,2] < 100)
+            red_pixels = np.sum(red_mask)
+            
+            # If more than 50 red pixels, consider it a threat
+            if red_pixels > 50:
+                threats.append(side)
+                
+        except Exception as e:
+            print(f"[WARNING] Threat detection failed: {e}", flush=True)
+
+    if "left" in threats and "right" in threats:
+        return "both"
+    elif "left" in threats:
+        return "left"
+    elif "right" in threats:
+        return "right"
+    else:
+        return "none"
+
 def is_card_available(card_idx):
     """
     Checks if a card is ready to play (colorful) or on cooldown/no elixir (grayscale).

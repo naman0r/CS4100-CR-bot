@@ -47,7 +47,7 @@ import matplotlib.pyplot as plt
 import sys
 
 from collections import defaultdict
-from local_placements import card_slots, king_tower, princess_towers, bridge, bot_crown_region
+from local_placements import card_slots, king_tower, princess_towers, bridge, bot_crown_region, opp_crown_region
 
 Q = defaultdict(float)
 N = defaultdict(int)
@@ -349,6 +349,32 @@ def winner_detected():
     
     else:
         crowns, reward = 0, -2
+
+    ''' reward bot defensiveness (not losing all princess towers) '''
+    if pyautogui.locateOnScreen('win_state/opp_three_crown.png',
+                                confidence=0.90, # high confidence to ensure match
+                                grayscale=True,
+                                region=opp_crown_region):
+	    print("Opponent three-crowned bot, no bot rewards", flush=True)
+
+    elif pyautogui.locateOnScreen('win_state/opp_two_crown.png',
+                                confidence=0.90, # high confidence to ensure match
+                                grayscale=True,
+                                region=opp_crown_region):
+	    reward += 3
+	    print("+3 reward, bot saved king tower", flush=True)
+	    						
+    elif pyautogui.locateOnScreen('win_state/opp_one_crown.png',
+                                confidence=0.90, # high confidence to ensure match
+                                grayscale=True,
+                                region=opp_crown_region):
+        reward += 5
+        print("+5 reward, bot saved one princess tower and king tower", flush=True)
+    
+    else:
+        reward += 8
+        print("+8 reward, bot saved all towers", flush=True)
+                
 
 	# You may need to change below code to win_state/bot_win_2.png or 3, 
 	# (or create your own screenshot/put it here), depending on arena background

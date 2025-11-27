@@ -51,8 +51,8 @@ from local_placements import card_slots, king_tower, princess_towers, bridge, bo
 
 Q = defaultdict(float)
 N = defaultdict(int)
-gamma = 0.9
-epsilon = 0.3   # start with 30% exploration
+gamma = 0.95
+epsilon = 0.67   # start with 67% exploration
 #decay_rate variable below
 
 NUM_BATTLES = 0
@@ -99,43 +99,54 @@ def safe_exit():
 # ---------------------------
 def get_state(start_time):
     """
-    Define state based on elapsed time.
-    0: Early Game (0-60s)
-    1: Mid Game (60-120s)
-    2: Double Elixir / Late Game (120s+)
+    Define state based on elapsed time AND threat detection.
+    Returns tuple: (game_phase, threat_side)
     """
     elapsed = time.time() - start_time
     if elapsed < 60:
-        return "early"
+        phase = "early"
     elif elapsed < 120:
-        return "mid"
+        phase = "mid"
     else:
-        return "late"
+        phase = "late"
+    
+    return phase
+    #threat = detect_threats()
+    #return (phase, threat)
 
 def choose_action(state):
     """
     Epsilon-greedy selection of (card_index, zone, side) with Action Masking.
     Only considers valid cards to speed up learning.
     """
-    # Identify valid cards first (Action Masking)
-    valid_actions = []
-    for action in actions:
-        card_idx = action[0]
-        # We can't check vision for EVERY action in the loop (too slow),
-        # so we'll do a standard epsilon check first, BUT
-        # for the max() step, we should ideally only pick valid ones.
-        # Optimization: Just check availability of the chosen card later?
-        # NO, strict Action Masking means we filter the list of actions.
-        # Let's just filter by card_idx validity ONCE per step if possible.
-        pass 
-        
-    # Simplified: Use epsilon greedy on ALL actions, but if specific card is
-    # invalid, the main loop applies penalty. 
-    # Full masking is expensive here without caching vision results.
+    # note: this is called safety constrained reinforcement learning, or action masking. 
+    # by narrowing the search space for only legal moves, the agent converges on a winning strategy much faster
+    # because it does not waste thousands of episodes learning 'dont click empty slots'
     
+    
+    # 1. Identify which cards are actually available (Vision Check)
+    available_cards = []
+    for i in range(4):
+        if is_card_available(i):
+            available_cards.append(i)
+            
+    # Fallback: If vision fails and says NO cards are ready (unlikely), assume all are ready
+    # so we don't crash.
+    if not available_cards:
+        available_cards = [0, 1, 2, 3]
+        
+    # 2. Filter 'actions' list to only include moves using available cards
+    valid_actions = [a for a in actions if a[0] in available_cards]
+    
+    if not valid_actions:
+        valid_actions = actions # Safety net
+        
+    # 3. Epsilon-Greedy Logic on VALID actions only
     if random.random() < epsilon:
-        return random.choice(actions)
-    return max(actions, key=lambda a: Q[(state, a)])
+        return random.choice(valid_actions)
+        
+    # Exploitation: Max Q-value among valid actions
+    return max(valid_actions, key=lambda a: Q[(state, a)])
 
 
 def update_Q(current_state, action, reward, next_state):
@@ -216,6 +227,51 @@ def plot_progress():
     plt.savefig("training_progress.png")
     plt.close()
     print("[INFO] Updated training_progress.png", flush=True)
+
+
+'''
+# ---------------------------
+# Computer Vision / Perception
+# ---------------------------
+def detect_threats():
+    """
+    Scans left and right lane regions for enemy troops (Red color).
+    Returns: "none", "left", "right", or "both"
+    """
+    # Define regions based on princess_towers and bridge
+    # Left Lane Box: Approx between Left Princess Tower and Bridge
+    # These coords are estimates based on local_placements.py
+    left_region = (800, 470, 160, 150) # x, y, w, h
+    right_region = (1080, 470, 160, 150)
+    
+    threats = []
+    
+    for side, region in [("left", left_region), ("right", right_region)]:
+        try:
+            img = pyautogui.screenshot(region=region)
+            arr = np.array(img)
+            
+            # Simple Red Detection
+            # R > 150, G < 100, B < 100 (heuristic for red health bars/troops)
+            red_mask = (arr[:,:,0] > 150) & (arr[:,:,1] < 100) & (arr[:,:,2] < 100)
+            red_pixels = np.sum(red_mask)
+            
+            # If more than 50 red pixels, consider it a threat
+            if red_pixels > 50:
+                threats.append(side)
+                
+        except Exception as e:
+            print(f"[WARNING] Threat detection failed: {e}", flush=True)
+
+    if "left" in threats and "right" in threats:
+        return "both"
+    elif "left" in threats:
+        return "left"
+    elif "right"	 in threats:
+        return "right"
+    else:
+        return "none"
+'''
 
 # ---------------------------
 # Computer Vision / Perception

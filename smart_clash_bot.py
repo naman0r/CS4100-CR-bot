@@ -79,7 +79,6 @@ last_state = None
 match_durations = []   # (episode, duration_seconds)
 
 
-
 # Load Q-table if exists
 try:
     with open("zone_qtable.pkl", "rb") as f:
@@ -278,19 +277,19 @@ def winner_detected():
                                 confidence=0.90, # high confidence to ensure match
                                 grayscale=True,
                                 region=bot_crown_region):
-        crowns, reward = 3, 6
+        crowns, reward = 3, 8
     
     elif pyautogui.locateOnScreen('win_state/two_crown.png',
                                   confidence=0.90,
                                   grayscale=True,
                                   region=bot_crown_region): 
-        crowns, reward = 2, 3
+        crowns, reward = 2, 6
     
     elif pyautogui.locateOnScreen('win_state/one_crown.png',
                                   confidence=0.90,
                                   grayscale=True,
                                   region=bot_crown_region):
-        crowns, reward = 1, 1
+        crowns, reward = 1, 2
     
     else:
         crowns, reward = 0, -2
@@ -302,7 +301,7 @@ def winner_detected():
         'win_state/bot_win_3.png', confidence=0.8, grayscale=True
     )
     if bot_win_location:
-        reward += 8
+        reward += 12
         BATTLES_WON += 1
         print(f"Bot WON the battle! Crowns: {crowns}, Reward: {reward}", flush=True)
         log_battle_result(reward, True)
@@ -316,7 +315,7 @@ def winner_detected():
     
     # Generate graphs
     plot_progress()
-    plot_match_durations()
+    #plot_match_durations()
     
     return reward   
      
@@ -454,9 +453,10 @@ def play_unranked_match(max_duration=300):  # 5 minutes
             match_durations.append((NUM_BATTLES, duration))
             with open("match_durations.csv", "a") as f:
                 f.write(f"{NUM_BATTLES},{duration}\n")
-
+		
             print(f"Match lasted {duration:.1f} seconds.", flush=True)
-
+            plot_match_durations()
+			
             # Q-learning update
             if last_action is not None and last_state is not None:
                 update_Q(last_state, last_action, reward, None)

@@ -110,25 +110,34 @@ def choose_action(state):
     Epsilon-greedy selection of (card_index, zone, side) with Action Masking.
     Only considers valid cards to speed up learning.
     """
-    # Identify valid cards first (Action Masking)
-    valid_actions = []
-    for action in actions:
-        card_idx = action[0]
-        # We can't check vision for EVERY action in the loop (too slow),
-        # so we'll do a standard epsilon check first, BUT
-        # for the max() step, we should ideally only pick valid ones.
-        # Optimization: Just check availability of the chosen card later?
-        # NO, strict Action Masking means we filter the list of actions.
-        # Let's just filter by card_idx validity ONCE per step if possible.
-        pass 
-        
-    # Simplified: Use epsilon greedy on ALL actions, but if specific card is
-    # invalid, the main loop applies penalty. 
-    # Full masking is expensive here without caching vision results.
+    # note: this is called safety constrained reinforcement learning, or action masking. 
+    # by narrowing the search space for only legal moves, the agent converges on a winning strategy much faster
+    # because it does not waste thousands of episodes learning 'dont click empty slots'
     
+    
+    # 1. Identify which cards are actually available (Vision Check)
+    available_cards = []
+    for i in range(4):
+        if is_card_available(i):
+            available_cards.append(i)
+            
+    # Fallback: If vision fails and says NO cards are ready (unlikely), assume all are ready
+    # so we don't crash.
+    if not available_cards:
+        available_cards = [0, 1, 2, 3]
+        
+    # 2. Filter 'actions' list to only include moves using available cards
+    valid_actions = [a for a in actions if a[0] in available_cards]
+    
+    if not valid_actions:
+        valid_actions = actions # Safety net
+        
+    # 3. Epsilon-Greedy Logic on VALID actions only
     if random.random() < epsilon:
-        return random.choice(actions)
-    return max(actions, key=lambda a: Q[(state, a)])
+        return random.choice(valid_actions)
+        
+    # Exploitation: Max Q-value among valid actions
+    return max(valid_actions, key=lambda a: Q[(state, a)])
 
 def update_Q(current_state, action, reward, next_state):
     """
@@ -370,19 +379,18 @@ def play_card(start_time):
     
     card_idx, zone_name, side = action
     
-    # PERCEPTION CHECK: Is the card actually ready?
-    if not is_card_available(card_idx):
-        # Punishment for trying to play unavailable card
-        # Teach agent to wait or pick another card
-        print(f"[VISION] Card {card_idx} unavailable. Penalty applied.", flush=True)
-        update_Q(current_state, action, -0.5, current_state) # Negative reward
-        return # Skip this turn, don't click
-        
-    last_action = action
-    last_state = current_state
+    # (Action Masking is now done inside choose_action, so we can remove the 
+    # penalty check here, OR keep it as a double-check safety net. 
+    # Let's comment it out to trust the mask.)
+    
+    # last_action = action
+    # last_state = current_state
     
     # Select the card coordinates
     card = card_slots[card_idx]
+
+    last_action = action
+    last_state = current_state
 
     # Get coordinates from local_placements
     x_spot, y_spot = zones[zone_name][side]

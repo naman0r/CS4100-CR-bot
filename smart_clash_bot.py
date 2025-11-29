@@ -52,8 +52,10 @@ from local_placements import card_slots, king_tower, princess_towers, bridge, bo
 Q = defaultdict(float)
 N = defaultdict(int)
 gamma = 0.9
-epsilon = 0.67   # start with 67% exploration
-#decay_rate variable below
+# epsilon = 0.67   # start with 67% exploration
+# epsilon = 0.3 # drop epsilon value
+epsilon = 0.1 # demo epsilon value
+# decay_rate variable below
 
 NUM_BATTLES = 0
 BATTLES_WON = 0

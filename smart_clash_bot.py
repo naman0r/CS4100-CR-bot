@@ -11,8 +11,8 @@
 # win more games.
 
 '''
-# BOT DECK (use these cards): knight, firecracker, valkyrie, dart goblin, bats, 
-							  giant skeleton, ice wizard, magic archer
+# BOT DECK (use these cards): knight, firecracker (evo), valkyrie, witch, 
+							  bomber (evo), furnace, mini pekka 
 
 # Note: Let's model this clash bot after Programming Assignment 2 - RL (Q_learning.py)
 

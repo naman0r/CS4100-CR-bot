@@ -62,11 +62,12 @@ from local_placements import card_slots, king_tower, princess_towers, bridge, bo
 CARD_NAMES = [
     "knight", 
     "firecracker", 
-    "valkarie", # Matches filename
+    "valkyrie", # Matches filename
     "witch", 
     "bomber", 
     "furnace", 
-    "minnipekka" # Matches filename
+    "minipekka", # Matches filename
+    "skeletons"
 ]
 
 # Map for handling Evo variants: Logic Name -> List of possible filenames
@@ -74,11 +75,12 @@ CARD_NAMES = [
 CARD_VARIANTS = {
     "knight": ["knight.png"],
     "firecracker": ["firecracker.png", "firecracker_evo.png"],
-    "valkarie": ["valkarie.png"],
+    "valkyrie": ["valkarie.png"],
     "witch": ["witch.png"],
     "bomber": ["bomber.png", "bomber_evo.png"],
     "furnace": ["furnace.png"],
-    "minnipekka": ["minnipekka.png"]
+    "minipekka": ["minipekka.png"],
+    "skeletons": ["skeletons.png"]
 }
 
 zones = {
@@ -100,7 +102,7 @@ for card in CARD_NAMES:
 Q = defaultdict(float)
 N = defaultdict(int)
 gamma = 0.9
-epsilon = 0.1 
+epsilon = 0.9 
 decay_rate = 0.995
 
 NUM_BATTLES = 0

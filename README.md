@@ -66,7 +66,10 @@ Improvements:
 
   - Wrote initial code for the random_clash_bot.py file, which eventually progressed to the smart_clash_bot.py file with our initial approach.
   - Did a lot of the setup, was the primary person to train the model and have it run on his computer.
-  - Slide deck contributions
+  - Created preliminary Q-learning functions and file I/O  
+  - Recorded demo vid
+  - Slide contributions: Background, Demo, Assumptions/Limitations, graphs/figures of results
+  - Aided Naman with vision_implementation_bot.py improvement on orig. bot
 
 - Naman:
   - created github repository

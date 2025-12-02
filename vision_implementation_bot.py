@@ -70,14 +70,15 @@ CARD_NAMES = [
     "skeletons"
 ]
 
+#IGNORING EVO VARIANTS FOR NOW
 # Map for handling Evo variants: Logic Name -> List of possible filenames
 # Logic Name is what the RL learns. Filenames are what we look for.
 CARD_VARIANTS = {
     "knight": ["knight.png"],
-    "firecracker": ["firecracker.png", "firecracker_evo.png"],
-    "valkyrie": ["valkarie.png"],
+    "firecracker": ["firecracker.png"],
+    "valkyrie": ["valkyrie.png"],
     "witch": ["witch.png"],
-    "bomber": ["bomber.png", "bomber_evo.png"],
+    "bomber": ["bomber.png"],
     "furnace": ["furnace.png"],
     "minipekka": ["minipekka.png"],
     "skeletons": ["skeletons.png"]
@@ -141,7 +142,18 @@ def identify_card_in_slot(slot_idx):
     x, y = card_slots[slot_idx]
     # Define region slightly larger than the card to be safe
     # Slot center is x,y. 
-    search_region = (x - 5, y - 5, 10, 10) #(x - 40, y - 50, 80, 100) -> Naman's orig code
+    search_region = (x-60,y-60,110,120)
+    
+    # offset from the center, width/height of the card to identify it
+    
+    #(x-50,y-50,100,110) -> best so far
+    
+    # (x - 5, y - 5, 10, 10)
+    # card slot 0:
+    # 850,850 -> top lh corner
+    # 950,850 -> top rh corner
+    # 850,960 -> bottom lh corner
+    # 950,960 -> bottom rh corner
      
     # Iterate through all LOGICAL cards in our deck
     for logic_name, variants in CARD_VARIANTS.items():

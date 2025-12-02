@@ -141,8 +141,8 @@ def identify_card_in_slot(slot_idx):
     x, y = card_slots[slot_idx]
     # Define region slightly larger than the card to be safe
     # Slot center is x,y. 
-    search_region = (x - 40, y - 50, 80, 100) 
-    
+    search_region = (x - 5, y - 5, 10, 10) #(x - 40, y - 50, 80, 100) -> Naman's orig code
+     
     # Iterate through all LOGICAL cards in our deck
     for logic_name, variants in CARD_VARIANTS.items():
         # Check each variant (e.g. Normal, Evo)

@@ -153,7 +153,8 @@ def identify_card_in_slot(slot_idx):
                     continue
                     
                 # confidence=0.7 is a good starting point for small icons
-                if pyautogui.locateOnScreen(img_path, region=search_region, confidence=0.7, grayscale=True):
+                # Lowering to 0.6 to help with detection
+                if pyautogui.locateOnScreen(img_path, region=search_region, confidence=0.6, grayscale=True):
                     return logic_name # Return the LOGICAL name (e.g. "firecracker")
             except Exception:
                 pass
@@ -486,10 +487,11 @@ def play_card(start_time):
 
     # 1. Identify Cards in Hand (Vision Step)
     current_hand = get_hand_cards()
+    print(f"[DEBUG] Cards detected: {list(current_hand.keys())}", flush=True)
     
     # If hand is empty (recognition failed or no cards match), wait and try again
     if not current_hand:
-        # print("[VISION] No known cards identified in hand...", flush=True)
+        print("[VISION] No known cards identified in hand. Check screenshots/coordinates.", flush=True)
         return # Skip turn
 
     # 2. Determine current state

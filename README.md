@@ -2,6 +2,8 @@
 
 Group 8 Final Project for CS4100 at Northeastern University (Fall 2025)
 
+AI Use disclosure: AI was used to understand parts of documentation of pyautogui for image detection, confidence level, etc (specifically Claude Sonnet 4.5). AI was also used to debug errors at certain occasions and understand why our code was crashing. AI was also used for a brief discussion about the feasibilities of other AI strategies in our project (like DQNs and differenciating between different types of RL and their feasibilities)
+
 ## Project Description
 
 This project implements an AI agent capable of playing the mobile game Clash Royale. The agent uses Reinforcement Learning (specifically Q-Learning) to learn optimal card placement strategies over time. The bot interacts with the game running on an Android emulator (BlueStacks) using screen capture and mouse automation.
